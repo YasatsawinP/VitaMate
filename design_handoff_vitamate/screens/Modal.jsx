@@ -53,7 +53,7 @@ const ModalPage = () => {
               อังคารที่ 14 พฤษภาคม
             </div>
             <h2 style={{ fontFamily: fonts.display, fontSize: 24, fontWeight: 400, margin: 0, letterSpacing: -0.3, color: V.sage900 }}>
-              วันนี้เป็นยังไงบ้าง <em style={{ fontStyle: 'italic', color: V.sage500 }}>คุณมายา?</em>
+              วันนี้เป็นยังไงบ้าง <em style={{ fontStyle: 'italic', color: V.sage500 }}>คุณอปป้า?</em>
             </h2>
             <p style={{ fontSize: 13, color: V.inkSoft, marginTop: 6, marginBottom: 0, lineHeight: 1.6, fontWeight: 300 }}>
               เช็กอินสั้น ๆ ไม่ต้องตรงเป๊ะ — แค่ใกล้เคียงก็พอค่ะ
