@@ -5,9 +5,11 @@ interface VitalStripProps {
   protein: number;
   calorieGoal: number;
   proteinGoal: number;
-  waterGoal: number;    // ml — converted to glasses (÷250) internally
-  sleepMin: number;
-  sleepMax: number;
+  waterGoal: number;        // ml
+  waterDrankMl: number;     // ml logged today
+  sleepMin: number;         // hours
+  sleepMax: number;         // hours
+  sleepLoggedMin: number | null; // minutes logged, null = not yet recorded
 }
 
 function fmt(n: number): string {
@@ -16,13 +18,31 @@ function fmt(n: number): string {
     : String(n);
 }
 
+function fmtSleep(min: number): string {
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return m > 0 ? `${h} ชม. ${m}` : `${h} ชม.`;
+}
+
 export default function VitalStrip({
-  calories, protein, calorieGoal, proteinGoal, waterGoal, sleepMin, sleepMax,
+  calories, protein, calorieGoal, proteinGoal,
+  waterGoal, waterDrankMl,
+  sleepMin, sleepMax, sleepLoggedMin,
 }: VitalStripProps) {
-  const calorieRing  = calorieGoal > 0 ? Math.min(calories / calorieGoal, 1) : 0;
-  const waterGlasses = Math.round(waterGoal / 250);
-  const waterDrank   = 5; // mocked — water tracking not implemented yet
-  const waterRing    = waterGlasses > 0 ? Math.min(waterDrank / waterGlasses, 1) : 0.62;
+  const calorieRing   = calorieGoal > 0 ? Math.min(calories / calorieGoal, 1) : 0;
+
+  const waterGlasses     = Math.round(waterGoal / 250);
+  const waterDrankGlasses = Math.round(waterDrankMl / 250);
+  const waterRing        = waterGoal > 0 ? Math.min(waterDrankMl / waterGoal, 1) : 0;
+  const waterLiters      = waterGoal / 1000;
+  const waterLiterStr    = Number.isInteger(waterLiters) ? String(waterLiters) : waterLiters.toFixed(1);
+
+  const sleepRing = sleepLoggedMin !== null
+    ? Math.min(sleepLoggedMin / (sleepMax * 60), 1)
+    : 0;
+  const sleepValue = sleepLoggedMin !== null ? fmtSleep(sleepLoggedMin) : "–";
+  const sleepUnit  = sleepLoggedMin !== null ? "เมื่อคืน" : "ยังไม่ได้บันทึก";
+  const sleepNote  = `เป้า ${sleepMin}–${sleepMax} ชม.`;
 
   const proteinNote =
     proteinGoal > 0
@@ -49,22 +69,24 @@ export default function VitalStrip({
         <VitalChip
           icon="drop"
           label="น้ำดื่ม"
-          value={String(waterDrank)}
+          value={String(waterDrankGlasses)}
           unit={`จาก ${waterGlasses} แก้ว`}
           ringValue={waterRing}
           color="#8FB0C4"
           track="#E5EDF2"
+          note={`≈ ${waterLiterStr} ล./วัน`}
         />
       </div>
       <div className="snap-start flex-none w-[220px] sm:flex-1 sm:w-auto">
         <VitalChip
           icon="moon"
           label="การนอนคืนที่ผ่านมา"
-          value="7 ชม. 12 นาที"
-          unit={`เป้า ${sleepMin}–${sleepMax} ชม.`}
-          ringValue={7.2 / sleepMax}
+          value={sleepValue}
+          unit={sleepUnit}
+          ringValue={sleepRing}
           color="#9890B0"
           track="#ECE7F0"
+          note={sleepNote}
         />
       </div>
     </div>

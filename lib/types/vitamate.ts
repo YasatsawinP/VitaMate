@@ -22,9 +22,35 @@ export type VitaResponse = {
 
 export type DashboardStatus = "idle" | "loading" | "done";
 
+// ── Unified journal entry (discriminated union) ────────────────────────────────
+
+export type MealJournalEntry = {
+  id: string;
+  type: "meal";
+  createdAt: number; // ms timestamp
+  data: { rawText: string; response: VitaResponse };
+};
+
+export type WaterJournalEntry = {
+  id: string;
+  type: "water";
+  createdAt: number;
+  data: { amountMl: number };
+};
+
+export type SleepJournalEntry = {
+  id: string;
+  type: "sleep";
+  createdAt: number;
+  data: { durationMin: number };
+};
+
+export type JournalEntry = MealJournalEntry | WaterJournalEntry | SleepJournalEntry;
+
+// Legacy alias — used only for localStorage migration
 export type MealEntry = {
   id: string;
   rawText: string;
-  timestamp: Date;
+  timestamp: string; // ISO string in storage
   response: VitaResponse;
 };

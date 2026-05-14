@@ -6,7 +6,16 @@ import GreetingSection from "./GreetingSection";
 import HeroInputCard from "./HeroInputCard";
 import VitaResponseCard from "./VitaResponseCard";
 import VitalStrip from "./VitalStrip";
-import { generateVitaResponse } from "@/lib/mock/vitaResponses";
+import JournalView from "./JournalView";
+import {
+  generateVitaResponse,
+  generateAdjustedResponse,
+  generateWaterResponse,
+  generateSleepResponse,
+  ADJUSTMENT_PROMPTS,
+  type AdjustmentId,
+} from "@/lib/mock/vitaResponses";
+import { parseHealthInput } from "@/lib/parsers/healthInputParser";
 import {
   isAIAvailable,
   activateCooldown,
@@ -17,6 +26,7 @@ import type { UserProfile } from "@/lib/types/profile";
 import type {
   VitaResponse,
   DashboardStatus,
+  JournalEntry,
   MealEntry,
   NutrientTotals,
 } from "@/lib/types/vitamate";
@@ -91,10 +101,17 @@ interface ProfileContext {
   targets: { calories: number; protein: number };
 }
 
-async function fetchAnalysis(text: string, ctx?: ProfileContext): Promise<FetchResult> {
+async function fetchAnalysis(
+  text: string,
+  ctx?: ProfileContext,
+  fallbackOverride?: VitaResponse,
+): Promise<FetchResult> {
+  const fallback = (showNote: boolean) =>
+    fallbackOverride ?? localFallback(text, showNote);
+
   // Skip the network entirely while Gemini is cooling down.
   if (!isAIAvailable()) {
-    return { response: localFallback(text, true), rateLimited: false };
+    return { response: fallback(true), rateLimited: false };
   }
 
   let res: Response;
@@ -106,16 +123,16 @@ async function fetchAnalysis(text: string, ctx?: ProfileContext): Promise<FetchR
     });
   } catch {
     console.warn("[VitaMate] Network error → using local fallback");
-    return { response: localFallback(text, false), rateLimited: false };
+    return { response: fallback(false), rateLimited: false };
   }
 
   if (!res.ok) {
     if (res.status === 429) {
       activateCooldown(); // logs once per cooldown window
-      return { response: localFallback(text, true), rateLimited: true };
+      return { response: fallback(true), rateLimited: true };
     }
     console.warn(`[VitaMate] API error (HTTP ${res.status}) → using local fallback`);
-    return { response: localFallback(text, false), rateLimited: false };
+    return { response: fallback(false), rateLimited: false };
   }
 
   let data: unknown;
@@ -123,12 +140,12 @@ async function fetchAnalysis(text: string, ctx?: ProfileContext): Promise<FetchR
     data = await res.json();
   } catch {
     console.warn("[VitaMate] Malformed API response → using local fallback");
-    return { response: localFallback(text, false), rateLimited: false };
+    return { response: fallback(false), rateLimited: false };
   }
 
   if (!isAnalyzeApiResponse(data)) {
     console.warn("[VitaMate] Unexpected API response shape → using local fallback");
-    return { response: localFallback(text, false), rateLimited: false };
+    return { response: fallback(false), rateLimited: false };
   }
 
   return { response: apiResponseToVitaResponse(data), rateLimited: false };
@@ -137,32 +154,42 @@ async function fetchAnalysis(text: string, ctx?: ProfileContext): Promise<FetchR
 // ── Dashboard constants ────────────────────────────────────────────────────────
 
 const ZERO_TOTALS: NutrientTotals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
-const MEALS_KEY = "vitamate_meals_v1";
+const ENTRIES_KEY = "vitamate_entries_v1";
+
+function todayStartMs(): number {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
 
 // ── localStorage helpers ───────────────────────────────────────────────────────
 
-function saveMeals(meals: MealEntry[]): void {
+function saveEntries(entries: JournalEntry[]): void {
   try {
-    localStorage.setItem(
-      MEALS_KEY,
-      JSON.stringify(meals.map((m) => ({ ...m, timestamp: m.timestamp.toISOString() })))
-    );
-  } catch {
-    // Private browsing or quota exceeded — silently skip
-  }
+    localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries));
+  } catch { /* private browsing / quota */ }
 }
 
-function loadMeals(): MealEntry[] {
+function loadEntries(): JournalEntry[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(MEALS_KEY);
-    if (!raw) return [];
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.map((m: Record<string, unknown>) => ({
-      ...m,
-      timestamp: new Date(m.timestamp as string),
-    })) as MealEntry[];
+    // New unified format
+    const raw = localStorage.getItem(ENTRIES_KEY);
+    if (raw) {
+      const parsed: unknown = JSON.parse(raw);
+      return Array.isArray(parsed) ? (parsed as JournalEntry[]) : [];
+    }
+    // Migrate old meal-only format
+    const oldRaw = localStorage.getItem("vitamate_meals_v1");
+    if (!oldRaw) return [];
+    const oldParsed: unknown = JSON.parse(oldRaw);
+    if (!Array.isArray(oldParsed)) return [];
+    return (oldParsed as MealEntry[]).map((m) => ({
+      id: m.id,
+      type: "meal" as const,
+      createdAt: new Date(m.timestamp).getTime(),
+      data: { rawText: m.rawText, response: m.response },
+    }));
   } catch {
     return [];
   }
@@ -181,27 +208,48 @@ export default function DashboardClient({ profile }: DashboardClientProps) {
   const [vitaResponse, setVitaResponse] = useState<VitaResponse | null>(null);
   const [responseKey, setResponseKey] = useState(0);
   const [lastSubmittedText, setLastSubmittedText] = useState("");
-  const [meals, setMeals] = useState<MealEntry[]>(() => loadMeals());
+  const [entries, setEntries] = useState<JournalEntry[]>(() => loadEntries());
   const [inputKey, setInputKey] = useState(0);
   const [cooldownActive, setCooldownActive] = useState(false);
+  const [activeTab, setActiveTab] = useState<"today" | "journal">("today");
 
-  useEffect(() => {
-    saveMeals(meals);
-  }, [meals]);
+  useEffect(() => { saveEntries(entries); }, [entries]);
 
-  const dailyTotals = useMemo<NutrientTotals>(
-    () =>
-      meals.reduce(
-        (acc, meal) => ({
-          calories: acc.calories + meal.response.nutrients.calories,
-          protein:  acc.protein  + meal.response.nutrients.protein,
-          carbs:    acc.carbs    + meal.response.nutrients.carbs,
-          fat:      acc.fat      + meal.response.nutrients.fat,
+  // Derive today's aggregate values from the unified entries array
+  const dailyTotals = useMemo<NutrientTotals>(() => {
+    const start = todayStartMs();
+    return entries
+      .filter((e): e is Extract<JournalEntry, { type: "meal" }> =>
+        e.type === "meal" && e.createdAt >= start)
+      .reduce(
+        (acc, e) => ({
+          calories: acc.calories + e.data.response.nutrients.calories,
+          protein:  acc.protein  + e.data.response.nutrients.protein,
+          carbs:    acc.carbs    + e.data.response.nutrients.carbs,
+          fat:      acc.fat      + e.data.response.nutrients.fat,
         }),
         ZERO_TOTALS
-      ),
-    [meals]
-  );
+      );
+  }, [entries]);
+
+  const waterDrankMl = useMemo(() => {
+    const start = todayStartMs();
+    return entries
+      .filter((e): e is Extract<JournalEntry, { type: "water" }> =>
+        e.type === "water" && e.createdAt >= start)
+      .reduce((sum, e) => sum + e.data.amountMl, 0);
+  }, [entries]);
+
+  const sleepLoggedMin = useMemo<number | null>(() => {
+    const start = todayStartMs();
+    const todaySleep = entries.filter(
+      (e): e is Extract<JournalEntry, { type: "sleep" }> =>
+        e.type === "sleep" && e.createdAt >= start
+    );
+    return todaySleep.length > 0
+      ? todaySleep[todaySleep.length - 1].data.durationMin
+      : null;
+  }, [entries]);
 
   const profileCtx: ProfileContext = useMemo(() => ({
     name:    profile.name,
@@ -213,6 +261,33 @@ export default function DashboardClient({ profile }: DashboardClientProps) {
 
   const handleSubmit = useCallback(async (text: string) => {
     setLastSubmittedText(text);
+
+    // Local parsing — water and sleep are handled instantly without an API call
+    const parsed = parseHealthInput(text);
+
+    if (parsed.type === "water") {
+      setEntries((prev) => [
+        ...prev,
+        { id: crypto.randomUUID(), type: "water", createdAt: Date.now(), data: { amountMl: parsed.amountMl } },
+      ]);
+      setVitaResponse(generateWaterResponse(parsed.amountMl));
+      setResponseKey((k) => k + 1);
+      setStatus("done");
+      return;
+    }
+
+    if (parsed.type === "sleep") {
+      setEntries((prev) => [
+        ...prev,
+        { id: crypto.randomUUID(), type: "sleep", createdAt: Date.now(), data: { durationMin: parsed.durationMin } },
+      ]);
+      setVitaResponse(generateSleepResponse(parsed.durationMin));
+      setResponseKey((k) => k + 1);
+      setStatus("done");
+      return;
+    }
+
+    // Regular meal / chat — call AI
     setStatus("loading");
 
     const { response, rateLimited } = await fetchAnalysis(text, profileCtx);
@@ -231,13 +306,13 @@ export default function DashboardClient({ profile }: DashboardClientProps) {
     if (!vitaResponse) return;
 
     if (vitaResponse.intent === "meal" || vitaResponse.intent === undefined) {
-      setMeals((prev) => [
+      setEntries((prev) => [
         ...prev,
         {
           id: crypto.randomUUID(),
-          rawText: lastSubmittedText,
-          timestamp: new Date(),
-          response: vitaResponse,
+          type: "meal" as const,
+          createdAt: Date.now(),
+          data: { rawText: lastSubmittedText, response: vitaResponse },
         },
       ]);
     }
@@ -249,6 +324,30 @@ export default function DashboardClient({ profile }: DashboardClientProps) {
     }, 900);
   }, [vitaResponse, lastSubmittedText]);
 
+  const handleAdjust = useCallback(async (adj: AdjustmentId) => {
+    if (!vitaResponse) return;
+
+    setStatus("loading");
+
+    const localAdjusted = generateAdjustedResponse(vitaResponse, adj);
+    const adjustedText = `${lastSubmittedText} — ${ADJUSTMENT_PROMPTS[adj]}`;
+
+    const { response, rateLimited } = await fetchAnalysis(
+      adjustedText,
+      profileCtx,
+      localAdjusted,
+    );
+
+    if (rateLimited) {
+      setCooldownActive(true);
+      setTimeout(() => setCooldownActive(false), getRemainingCooldown());
+    }
+
+    setVitaResponse(response);
+    setResponseKey((k) => k + 1);
+    setStatus("done");
+  }, [vitaResponse, lastSubmittedText, profileCtx]);
+
   return (
     <div
       className="min-h-screen flex flex-col"
@@ -259,48 +358,69 @@ export default function DashboardClient({ profile }: DashboardClientProps) {
           "#F4EFE3",
       }}
     >
-      <DashboardHeader />
+      <DashboardHeader
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        name={profile.name}
+      />
       <main className="flex-1 flex justify-center px-4 sm:px-14 pb-6 sm:pb-9">
         <div className="w-full max-w-[880px] flex flex-col gap-5">
-          <GreetingSection name={profile.name} />
 
-          <HeroInputCard
-            key={inputKey}
-            onSubmit={handleSubmit}
-            isSubmitting={status === "loading"}
-          />
+          {activeTab === "today" && (
+            <>
+              <GreetingSection name={profile.name} />
 
-          {cooldownActive && (
-            <p
-              className="text-center text-[13px]"
-              style={{
-                color: "rgba(110,137,97,0.72)",
-                fontFamily: "var(--font-prompt), 'IBM Plex Sans Thai', Inter, sans-serif",
-                animation: "vita-fade 0.4s ease-out both",
-              }}
-            >
-              VitaMate กำลังคิดแบบออฟไลน์ 😊
-            </p>
+              <HeroInputCard
+                key={inputKey}
+                onSubmit={handleSubmit}
+                isSubmitting={status === "loading"}
+              />
+
+              {cooldownActive && (
+                <p
+                  className="text-center text-[13px]"
+                  style={{
+                    color: "rgba(110,137,97,0.72)",
+                    fontFamily: "var(--font-prompt), 'IBM Plex Sans Thai', Inter, sans-serif",
+                    animation: "vita-fade 0.4s ease-out both",
+                  }}
+                >
+                  VitaMate กำลังคิดแบบออฟไลน์ 😊
+                </p>
+              )}
+
+              {status !== "idle" && (
+                <VitaResponseCard
+                  response={vitaResponse}
+                  status={status}
+                  responseKey={responseKey}
+                  onConfirm={handleConfirm}
+                  onAdjust={handleAdjust}
+                />
+              )}
+
+              <VitalStrip
+                calories={dailyTotals.calories}
+                protein={dailyTotals.protein}
+                calorieGoal={targets.calories}
+                proteinGoal={targets.protein}
+                waterGoal={targets.water}
+                waterDrankMl={waterDrankMl}
+                sleepMin={targets.sleepMin}
+                sleepMax={targets.sleepMax}
+                sleepLoggedMin={sleepLoggedMin}
+              />
+            </>
           )}
 
-          {status !== "idle" && (
-            <VitaResponseCard
-              response={vitaResponse}
-              status={status}
-              responseKey={responseKey}
-              onConfirm={handleConfirm}
+          {activeTab === "journal" && (
+            <JournalView
+              entries={entries}
+              targets={targets}
+              onGoToToday={() => setActiveTab("today")}
             />
           )}
 
-          <VitalStrip
-            calories={dailyTotals.calories}
-            protein={dailyTotals.protein}
-            calorieGoal={targets.calories}
-            proteinGoal={targets.protein}
-            waterGoal={targets.water}
-            sleepMin={targets.sleepMin}
-            sleepMax={targets.sleepMax}
-          />
         </div>
       </main>
     </div>

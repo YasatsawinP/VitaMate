@@ -458,6 +458,174 @@ const DEFAULTS: VitaResponse[] = [
   },
 ];
 
+// ── Adjustment system ──────────────────────────────────────────────────────────
+
+export type AdjustmentId =
+  | "lighter"
+  | "more_protein"
+  | "more_filling"
+  | "less_carbs"
+  | "more_veggies"
+  | "healthier";
+
+export const ADJUSTMENT_PROMPTS: Record<AdjustmentId, string> = {
+  lighter:      "ขอเวอร์ชันที่เบาและแคลลอรีน้อยกว่านี้นะคะ",
+  more_protein: "ขอเพิ่มโปรตีนให้มากขึ้นได้ไหมคะ",
+  more_filling: "ขอเวอร์ชันที่อิ่มนานขึ้น อยู่ท้องกว่าเดิมได้ไหมคะ",
+  less_carbs:   "ขอลดแป้งและคาร์บลงนะคะ",
+  more_veggies: "ขอเพิ่มผักและไฟเบอร์มากขึ้นได้ไหมคะ",
+  healthier:    "ขอตัวเลือกที่เพื่อสุขภาพกว่าเดิมได้ไหมคะ",
+};
+
+const ADJUSTMENT_QUOTES: Record<AdjustmentId, { quote: string; quoteEmphasis: string }> = {
+  lighter: {
+    quote: "เบาลงแล้วค่ะ แคลลอรีลดลงมาให้แล้ว แต่ยังอิ่มได้อยู่นะคะ",
+    quoteEmphasis: " ลองทานผักสดเพิ่มเป็นตัวช่วยด้วยได้เลยค่ะ",
+  },
+  more_protein: {
+    quote: "เพิ่มโปรตีนให้แล้วค่ะ กล้ามเนื้อจะดีใจมากเลยนะคะ",
+    quoteEmphasis: " อย่าลืมดื่มน้ำตามเยอะ ๆ เพื่อช่วยการดูดซึมด้วยนะคะ",
+  },
+  more_filling: {
+    quote: "ปรับให้อิ่มนานขึ้นแล้วค่ะ ไฟเบอร์และโปรตีนช่วยยืดความอิ่มได้ดีเลยค่ะ",
+    quoteEmphasis: " น่าจะเอาอยู่ถึงมื้อถัดไปสบาย ๆ เลยนะคะ",
+  },
+  less_carbs: {
+    quote: "ลดแป้งลงมาแล้วค่ะ น้ำตาลในเลือดจะเสถียรขึ้นนะคะ",
+    quoteEmphasis: " เติมโปรตีนหรือผักชดเชยความอิ่มได้เลยค่ะ",
+  },
+  more_veggies: {
+    quote: "เพิ่มผักให้แล้วค่ะ ไฟเบอร์ดีขึ้นและรู้สึกสดชื่นมากขึ้นนะคะ",
+    quoteEmphasis: " สีสันในมื้อนี้ก็สวยขึ้นด้วยค่ะ",
+  },
+  healthier: {
+    quote: "เพื่อสุขภาพขึ้นแล้วค่ะ สมดุลโภชนาการดีกว่าเดิมนะคะ",
+    quoteEmphasis: " เลือกแบบนี้บ่อย ๆ ร่างกายจะขอบคุณมากเลยค่ะ",
+  },
+};
+
+export function generateAdjustedResponse(
+  original: VitaResponse,
+  adj: AdjustmentId,
+): VitaResponse {
+  let { calories, protein, carbs, fat } = original.nutrients;
+
+  switch (adj) {
+    case "lighter":
+      calories = Math.round(calories * 0.72);
+      fat      = Math.round(fat      * 0.65);
+      carbs    = Math.round(carbs    * 0.80);
+      break;
+    case "more_protein":
+      protein  = Math.round(protein  * 1.45);
+      calories = Math.round(calories * 1.10);
+      fat      = Math.round(fat      * 0.88);
+      break;
+    case "more_filling":
+      protein  = Math.round(protein  * 1.22);
+      calories = Math.round(calories * 1.08);
+      carbs    = Math.round(carbs    * 0.90);
+      break;
+    case "less_carbs":
+      carbs    = Math.round(carbs    * 0.50);
+      protein  = Math.round(protein  * 1.25);
+      calories = Math.round(calories * 0.82);
+      break;
+    case "more_veggies":
+      calories = Math.round(calories * 0.90);
+      carbs    = Math.round(carbs    * 0.85);
+      fat      = Math.round(fat      * 0.85);
+      break;
+    case "healthier":
+      calories = Math.round(calories * 0.85);
+      fat      = Math.round(fat      * 0.70);
+      protein  = Math.round(protein  * 1.10);
+      carbs    = Math.round(carbs    * 0.88);
+      break;
+  }
+
+  const q = ADJUSTMENT_QUOTES[adj];
+
+  return {
+    intent: "meal",
+    quote: q.quote,
+    quoteEmphasis: q.quoteEmphasis,
+    macros: [
+      { label: "พลังงาน", value: `≈ ${calories}`, unit: "แคล" },
+      { label: "โปรตีน",  value: `≈ ${protein}`,  unit: "ก." },
+      { label: "คาร์บ",   value: `≈ ${carbs}`,    unit: "ก." },
+      { label: "ไขมัน",   value: `≈ ${fat}`,      unit: "ก." },
+    ],
+    nutrients: { calories, protein, carbs, fat },
+  };
+}
+
+// ── Water & sleep response generators ─────────────────────────────────────────
+
+const EMPTY_MACROS: VitaResponse["macros"] = [
+  { label: "พลังงาน", value: "–", unit: "แคล" },
+  { label: "โปรตีน",  value: "–", unit: "ก." },
+  { label: "คาร์บ",   value: "–", unit: "ก." },
+  { label: "ไขมัน",   value: "–", unit: "ก." },
+];
+const ZERO_NUTRIENTS = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+
+export function generateWaterResponse(amountMl: number): VitaResponse {
+  const glasses = Math.max(1, Math.round(amountMl / 250));
+  const liters  = (amountMl / 1000).toFixed(1).replace(/\.0$/, "");
+  const display = amountMl >= 1000 ? `${liters} ลิตร` : `${glasses} แก้ว`;
+
+  let quote: string;
+  let quoteEmphasis: string;
+
+  if (amountMl >= 1000) {
+    quote         = `เยี่ยมมากเลยค่ะ ดื่มน้ำได้ ${display} เต็ม ๆ เลย`;
+    quoteEmphasis = " ร่างกายขอบคุณมากนะคะ เซลล์ทุกเซลล์ฟื้นตัวได้ดีแล้วค่ะ";
+  } else if (amountMl >= 500) {
+    quote         = `ดีมากเลยค่ะ เติมน้ำ ${display} แล้วนะคะ`;
+    quoteEmphasis = " จิบน้ำสม่ำเสมอตลอดวันช่วยได้มากเลยค่ะ";
+  } else {
+    quote         = `บันทึกน้ำ ${display} แล้วค่ะ`;
+    quoteEmphasis = " ทยอยดื่มทุกชั่วโมงจะช่วยให้ครบเป้าได้ง่ายขึ้นนะคะ";
+  }
+
+  return {
+    intent: "chat",
+    quote,
+    quoteEmphasis,
+    macros: EMPTY_MACROS,
+    nutrients: ZERO_NUTRIENTS,
+  };
+}
+
+export function generateSleepResponse(durationMin: number): VitaResponse {
+  const h       = Math.floor(durationMin / 60);
+  const m       = durationMin % 60;
+  const timeStr = m > 0 ? `${h} ชม. ${m} นาที` : `${h} ชั่วโมง`;
+
+  let quote: string;
+  let quoteEmphasis: string;
+
+  if (durationMin >= 7 * 60) {
+    quote         = `บันทึกแล้วค่ะ เมื่อคืนนอนได้ ${timeStr}`;
+    quoteEmphasis = " พักผ่อนได้ดีมากเลยค่ะ วันนี้ร่างกายน่าจะสดชื่นนะคะ";
+  } else if (durationMin >= 6 * 60) {
+    quote         = `เมื่อคืนนอน ${timeStr} นะคะ`;
+    quoteEmphasis = " ลองพยายามนอนให้ถึง 7–8 ชั่วโมงได้นะคะ ร่างกายจะฟื้นตัวได้ดีขึ้นค่ะ";
+  } else {
+    quote         = `นอนน้อยไปนิดนะคะ แค่ ${timeStr} เอง`;
+    quoteEmphasis = " คืนนี้ลองเข้านอนเร็วขึ้นสักหน่อยได้เลยนะคะ Vita เป็นห่วง 🫶";
+  }
+
+  return {
+    intent: "chat",
+    quote,
+    quoteEmphasis,
+    macros: EMPTY_MACROS,
+    nutrients: ZERO_NUTRIENTS,
+  };
+}
+
 // ── Lookup ─────────────────────────────────────────────────────────────────────
 
 export function generateVitaResponse(text: string): VitaResponse {
