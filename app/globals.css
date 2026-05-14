@@ -7,7 +7,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-prompt), "IBM Plex Sans Thai", Inter, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -46,6 +46,50 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* VitaMate fonts */
+  --font-display: var(--font-kanit), "IBM Plex Sans Thai", Inter, sans-serif;
+  --font-sub: var(--font-prompt), "IBM Plex Sans Thai", Inter, sans-serif;
+
+  /* Sage palette */
+  --color-sage-50: #EEF2E5;
+  --color-sage-100: #DBE4C9;
+  --color-sage-200: #BFCFA8;
+  --color-sage-300: #9DB585;
+  --color-sage-400: #7A9A6A;
+  --color-sage-500: #5E7F50;
+  --color-sage-600: #48663C;
+  --color-sage-700: #344B2C;
+  --color-sage-900: #1E2C19;
+  --color-sage-mist: #E4ECDB;
+  --color-sage-hush: #CFDBC0;
+  --color-sage-soft: #A7BB99;
+  --color-sage-deep: #6E8961;
+  --color-sage-ink: #3D4F33;
+
+  /* Earth palette */
+  --color-clay: #C77B57;
+  --color-clay-light: #E9C8B4;
+  --color-sand: #D9C8A4;
+  --color-oat: #E8DFC9;
+  --color-honey: #D9A85C;
+  --color-rust: #A86442;
+
+  /* Surfaces */
+  --color-page-bg: #F4EFE3;
+  --color-card-soft: #FBF7EE;
+
+  /* Text */
+  --color-ink: #1F2A1B;
+  --color-ink-soft: #3D4A36;
+  --color-mute: #7A816F;
+  --color-mute-soft: #A8AC9D;
+
+  /* Vitals */
+  --color-water: #8FB0C4;
+  --color-water-accent: #E5EDF2;
+  --color-sleep-purple: #9890B0;
+  --color-sleep-accent: #ECE7F0;
 }
 
 :root {
@@ -126,5 +170,97 @@
   }
   html {
     @apply font-sans;
+    font-family: var(--font-prompt), "IBM Plex Sans Thai", Inter, system-ui, sans-serif;
   }
+}
+
+/* ─── VitaMate loading animations ─────────────────────────────────────────── */
+
+/* Status dot: slow inhale/exhale glow */
+@keyframes vita-breathe {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 3px rgba(201, 220, 180, 0.20);
+    opacity: 0.75;
+  }
+  50% {
+    transform: scale(1.18);
+    box-shadow: 0 0 0 6px rgba(201, 220, 180, 0.10);
+    opacity: 1;
+  }
+}
+
+/* Skeleton lines: barely-visible shimmer sweep */
+@keyframes vita-shimmer {
+  0%   { background-position: -250% center; }
+  100% { background-position: 250% center; }
+}
+
+.vita-shimmer-line {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.09) 0%,
+    rgba(255, 255, 255, 0.09) 35%,
+    rgba(255, 255, 255, 0.18) 50%,
+    rgba(255, 255, 255, 0.09) 65%,
+    rgba(255, 255, 255, 0.09) 100%
+  );
+  background-size: 300% 100%;
+  animation: vita-shimmer 3s ease-in-out infinite;
+}
+
+/* Typing dots: gentle crest-and-fall wave */
+@keyframes vita-float {
+  0%, 100% { transform: translateY(0px);  opacity: 0.35; }
+  50%       { transform: translateY(-3px); opacity: 0.85; }
+}
+
+/* Card entrance: rises into view once */
+@keyframes vita-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Response content: fades in with a soft upward drift */
+@keyframes vita-appear {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Cooldown / status banners: gentle fade-in */
+@keyframes vita-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Onboarding: step slides in from right (forward navigation) */
+@keyframes vita-onboard-right {
+  from { opacity: 0; transform: translateX(28px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Onboarding: step slides in from left (back navigation) */
+@keyframes vita-onboard-left {
+  from { opacity: 0; transform: translateX(-28px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Suppress number input spin buttons */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* ─── Utility: hide scrollbar while preserving scroll ──────────────────────── */
+
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }

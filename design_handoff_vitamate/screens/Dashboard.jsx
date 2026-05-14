@@ -80,7 +80,7 @@ const VitalChip = ({ icon, label, value, unit, ringValue, color, accent }) => {
 };
 
 const DashboardPage = () => {
-  // มื้อที่คุณมายาเพิ่งเล่าให้ Vita ฟัง
+  // มื้อที่คุณอปป้าเพิ่งเล่าให้ Vita ฟัง
   const draft = "เช้านี้ทานโยเกิร์ตกรีกราดน้ำผึ้ง โรยวอลนัทกับบลูเบอร์รีนิดหน่อย กับกาแฟดำหนึ่งแก้ว";
 
   return (
@@ -146,7 +146,7 @@ const DashboardPage = () => {
               margin: 0, fontFamily: fonts.display, fontWeight: 300,
               fontSize: 32, letterSpacing: -0.4, color: S.sageInk, lineHeight: 1.2,
             }}>
-              อรุณสวัสดิ์ค่ะ <em style={{ fontStyle: 'italic', color: S.sageDeep, fontWeight: 400 }}>คุณมายา</em>
+              อรุณสวัสดิ์ค่ะ <em style={{ fontStyle: 'italic', color: S.sageDeep, fontWeight: 400 }}>คุณอปป้า</em>
             </h1>
           </div>
 

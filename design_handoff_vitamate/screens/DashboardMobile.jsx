@@ -99,7 +99,7 @@ const MobileDashboard = () => {
           </div>
           <div style={{ fontFamily: fonts.display, fontSize: 22, fontWeight: 300, letterSpacing: -0.3, color: '#3D4F33', lineHeight: 1.2 }}>
             อรุณสวัสดิ์ค่ะ<br/>
-            <span style={{ fontStyle: 'italic', color: '#6E8961', fontWeight: 400 }}>คุณมายา</span>
+            <span style={{ fontStyle: 'italic', color: '#6E8961', fontWeight: 400 }}>คุณอปป้า</span>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

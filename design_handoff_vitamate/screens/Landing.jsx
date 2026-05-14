@@ -110,7 +110,7 @@ const LandingPage = () => {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
               <div>
                 <div style={{ fontSize: 11, color: V.mute }}>วันอังคาร</div>
-                <div style={{ fontFamily: fonts.display, fontSize: 20, fontWeight: 400, marginTop: 2 }}>อรุณสวัสดิ์ค่ะ คุณมายา</div>
+                <div style={{ fontFamily: fonts.display, fontSize: 20, fontWeight: 400, marginTop: 2 }}>อรุณสวัสดิ์ค่ะ คุณอปป้า</div>
               </div>
               <div style={{ width: 36, height: 36, borderRadius: 999, background: V.sand,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: fonts.display, color: V.rust }}>ม</div>
