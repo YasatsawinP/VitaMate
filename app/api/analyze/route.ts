@@ -18,14 +18,62 @@ interface IncomingProfile {
   weight: number;
   goal: string;
   targets: { calories: number; protein: number };
+  dailyCalories?: number;
+  dailyProtein?: number;
+  sleepMin?: number | null;
 }
 
 // ── Prompt builder ─────────────────────────────────────────────────────────────
 
 function buildSystemInstruction(profile?: IncomingProfile): string {
-  const personalContext = profile
-    ? `\nข้อมูลผู้ใช้:\n- ชื่อ: ${profile.name}\n- อายุ: ${profile.age} ปี\n- น้ำหนัก: ${profile.weight} กก.\n- เป้าหมาย: ${GOAL_LABEL_TH[profile.goal] ?? profile.goal}\n- เป้าพลังงานต่อวัน: ${profile.targets.calories} แคล\n- เป้าโปรตีนต่อวัน: ${profile.targets.protein} ก.\n\nเรียกผู้ใช้ว่าคุณ${profile.name} เป็นครั้งคราว ให้คำแนะนำที่สอดคล้องกับเป้าหมายของเขา/เธอ`
-    : "";
+  let personalContext = "";
+  let dailyContext = "";
+  let guidanceRules = "";
+
+  if (profile) {
+    personalContext = `\nข้อมูลผู้ใช้:\n- ชื่อ: ${profile.name}\n- อายุ: ${profile.age} ปี\n- น้ำหนัก: ${profile.weight} กก.\n- เป้าหมาย: ${GOAL_LABEL_TH[profile.goal] ?? profile.goal}\n- เป้าพลังงานต่อวัน: ${profile.targets.calories} แคล\n- เป้าโปรตีนต่อวัน: ${profile.targets.protein} ก.\n\nเรียกผู้ใช้ว่าคุณ${profile.name} เป็นครั้งคราว ให้คำแนะนำที่สอดคล้องกับเป้าหมายของเขา/เธอ`;
+
+    const lines: string[] = [];
+
+    if (profile.dailyCalories !== undefined) {
+      const remaining = profile.targets.calories - profile.dailyCalories;
+      const label = remaining >= 0
+        ? `เหลืออีก ${remaining} แคล`
+        : `เกินมา ${Math.abs(remaining)} แคล`;
+      lines.push(`แคลลอรีที่ทานแล้ววันนี้: ${profile.dailyCalories} / ${profile.targets.calories} แคล (${label})`);
+    }
+    if (profile.dailyProtein !== undefined) {
+      lines.push(`โปรตีนที่ทานแล้ววันนี้: ${profile.dailyProtein} / ${profile.targets.protein} ก.`);
+    }
+    if (profile.sleepMin != null) {
+      const h = Math.floor(profile.sleepMin / 60);
+      const m = profile.sleepMin % 60;
+      lines.push(`นอนหลับเมื่อคืน: ${m > 0 ? `${h} ชม. ${m} นาที` : `${h} ชั่วโมง`}`);
+    }
+
+    if (lines.length > 0) {
+      dailyContext = `\n\nสถานะวันนี้:\n${lines.map((l) => `- ${l}`).join("\n")}`;
+    }
+
+    if (profile.dailyCalories !== undefined) {
+      const remaining = profile.targets.calories - profile.dailyCalories;
+      guidanceRules += `\n\nแนวทางตอบเมื่อ intent เป็น "meal":
+- ต่อท้าย message ด้วยคำแนะนำมื้อถัดไป 1 ประโยคเสมอ โดยดูจาก remaining calories:
+  - เหลือ > 400 แคล → แนะนำทานมื้อต่อไปให้ครบ ระบุอาหารที่เหมาะสม เช่น โปรตีนหรือผัก
+  - เกิน > 100 แคล → แนะนำมื้อต่อไปเบาลง เช่น สลัด ซุปใส ผักนึ่ง
+  - ต่าง ≤ 100 แคล → ชมเชยว่าใกล้เป้าแล้ว แนะนำรักษาระดับ
+- (remaining ปัจจุบัน = ${remaining} แคล)`;
+    }
+
+    if (profile.sleepMin != null) {
+      guidanceRules += `\n\nแนวทางตอบเมื่อผู้ใช้พูดถึงการนอนหรือความเหนื่อยล้า:
+- < 360 นาที (< 6 ชม.) → บอกว่านอนน้อยมาก แนะนำเข้านอนเร็วขึ้นคืนนี้
+- 360–420 นาที (6–7 ชม.) → ใกล้เคียงแต่ยังขาด แนะนำเพิ่มอีก 30–60 นาที
+- 420–540 นาที (7–9 ชม.) → ดีมาก ชม
+- > 540 นาที (> 9 ชม.) → นอนมากไปนิด อาจทำให้เซื่องซึมได้ แนะนำปรับ
+- (ข้อมูลการนอนล่าสุด = ${profile.sleepMin} นาที)`;
+    }
+  }
 
   return `คุณคือ VitaMate ผู้ช่วยสุขภาพ AI ภาษาไทย
 
@@ -48,7 +96,7 @@ function buildSystemInstruction(profile?: IncomingProfile): string {
 - ห้ามใส่ \`\`\`json
 - ห้ามตอบนอก JSON
 - message ต้องสั้น อ่านง่าย อบอุ่น
-- ถ้า intent เป็น "unknown" ให้ถามกลับอย่างสุภาพเพื่อขอข้อมูลเพิ่ม${personalContext}
+- ถ้า intent เป็น "unknown" ให้ถามกลับอย่างสุภาพเพื่อขอข้อมูลเพิ่ม${personalContext}${dailyContext}${guidanceRules}
 
 ตอบ JSON format นี้เท่านั้น:
 {

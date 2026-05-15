@@ -1,13 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect, useCallback } from "react";
-import { Camera, Mic, Apple, ArrowRight, Sparkles, Loader2 } from "lucide-react";
-
-const ACTION_CHIPS = [
-  { icon: Camera, label: "ถ่ายรูปแทน" },
-  { icon: Mic, label: "พูดได้นะ" },
-  { icon: Apple, label: "มื้อก่อนหน้า" },
-] as const;
+import { ArrowRight, Sparkles, Loader2 } from "lucide-react";
 
 interface HeroInputCardProps {
   onSubmit: (text: string) => Promise<void>;
@@ -133,37 +127,9 @@ export default function HeroInputCard({ onSubmit, isSubmitting }: HeroInputCardP
 
       {/* Tool row */}
       <div
-        className="flex items-center gap-2 mt-2.5 pt-3"
+        className="flex items-center justify-end mt-2.5 pt-3"
         style={{ borderTop: "1px solid rgba(31,42,27,0.05)" }}
       >
-        <div className="flex gap-1.5 flex-wrap flex-1">
-          {ACTION_CHIPS.map(({ icon: Icon, label }) => (
-            <button
-              key={label}
-              type="button"
-              disabled={isSubmitting}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12.5px] font-normal"
-              style={{
-                background: "#FBF7EE",
-                border: "1px solid rgba(31,42,27,0.05)",
-                color: "#3D4A36",
-                cursor: isSubmitting ? "not-allowed" : "pointer",
-                opacity: isSubmitting ? 0.4 : 1,
-                transition: "opacity 0.2s ease, background-color 0.15s ease",
-              }}
-              onMouseEnter={(e) => {
-                if (!isSubmitting) (e.currentTarget as HTMLButtonElement).style.background = "#EEF2E5";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background = "#FBF7EE";
-              }}
-            >
-              <Icon size={12} strokeWidth={1.6} />
-              {label}
-            </button>
-          ))}
-        </div>
-
         <button
           type="button"
           onClick={handleSubmit}

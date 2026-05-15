@@ -82,9 +82,42 @@ function apiResponseToVitaResponse(data: AnalyzeApiResponse): VitaResponse {
 
 const COOLDOWN_NOTE = " VitaMate กำลังพัก AI แป๊บนึง 😊";
 
-function localFallback(text: string, showCooldownNote: boolean): VitaResponse {
+function smartEmphasis(base: VitaResponse, ctx?: ProfileContext): string {
+  if (!ctx) return base.quoteEmphasis;
+
+  // Sleep warning takes top priority
+  if (ctx.sleepMin != null && ctx.sleepMin < 360) {
+    return " นอนน้อยไปนะคะ คืนนี้ลองเข้านอนเร็วขึ้นสักชั่วโมงได้เลยนะคะ 🫶";
+  }
+
+  // Calorie guidance for meal responses
+  if (base.intent === "meal") {
+    const remaining = ctx.targets.calories - ctx.dailyCalories;
+    const proteinShort = ctx.targets.protein - ctx.dailyProtein;
+
+    if (remaining > 400) {
+      return proteinShort > 20
+        ? ` ยังเหลือพลังงานอีก ${remaining} แคลนะคะ มื้อต่อไปลองเพิ่มโปรตีนด้วยจะดีเลยค่ะ`
+        : ` ยังเหลืออีก ${remaining} แคลนะคะ มื้อต่อไปทานให้ครบเป้าได้เลยค่ะ`;
+    }
+    if (remaining > 100) {
+      return ` เหลืออีกนิดเดียวเลยค่ะ ${remaining} แคล มื้อเย็นเบาๆ ก็ครบพอดีนะคะ`;
+    }
+    if (remaining < -100) {
+      return ` วันนี้เกินมา ${Math.abs(remaining)} แคลแล้วนะคะ มื้อต่อไปลองเบาลงสักนิดได้เลยค่ะ`;
+    }
+    if (Math.abs(remaining) <= 100) {
+      return " ใกล้เป้าพอดีเลยค่ะ รักษาระดับนี้ไว้ได้เลยนะคะ 🎯";
+    }
+  }
+
+  return base.quoteEmphasis;
+}
+
+function localFallback(text: string, showCooldownNote: boolean, ctx?: ProfileContext): VitaResponse {
   const base = generateVitaResponse(text);
-  return showCooldownNote ? { ...base, quoteEmphasis: COOLDOWN_NOTE } : base;
+  if (showCooldownNote) return { ...base, quoteEmphasis: COOLDOWN_NOTE };
+  return { ...base, quoteEmphasis: smartEmphasis(base, ctx) };
 }
 
 interface FetchResult {
@@ -99,6 +132,9 @@ interface ProfileContext {
   weight: number;
   goal: string;
   targets: { calories: number; protein: number };
+  dailyCalories: number;
+  dailyProtein: number;
+  sleepMin: number | null;
 }
 
 async function fetchAnalysis(
@@ -107,7 +143,7 @@ async function fetchAnalysis(
   fallbackOverride?: VitaResponse,
 ): Promise<FetchResult> {
   const fallback = (showNote: boolean) =>
-    fallbackOverride ?? localFallback(text, showNote);
+    fallbackOverride ?? localFallback(text, showNote, ctx);
 
   // Skip the network entirely while Gemini is cooling down.
   if (!isAIAvailable()) {
@@ -252,12 +288,15 @@ export default function DashboardClient({ profile }: DashboardClientProps) {
   }, [entries]);
 
   const profileCtx: ProfileContext = useMemo(() => ({
-    name:    profile.name,
-    age:     profile.age,
-    weight:  profile.weight,
-    goal:    profile.goal,
-    targets: { calories: targets.calories, protein: targets.protein },
-  }), [profile, targets]);
+    name:          profile.name,
+    age:           profile.age,
+    weight:        profile.weight,
+    goal:          profile.goal,
+    targets:       { calories: targets.calories, protein: targets.protein },
+    dailyCalories: Math.round(dailyTotals.calories),
+    dailyProtein:  Math.round(dailyTotals.protein),
+    sleepMin:      sleepLoggedMin,
+  }), [profile, targets, dailyTotals, sleepLoggedMin]);
 
   const handleSubmit = useCallback(async (text: string) => {
     setLastSubmittedText(text);

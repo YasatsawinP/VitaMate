@@ -7,35 +7,22 @@ type Template = {
 
 // ── Meal templates ─────────────────────────────────────────────────────────────
 
+// Order matters: specific/compound dishes must come before short generic keywords
+// (e.g. "ไข่" is a substring of "ข้าวมันไก่ไข่ดาว" — put ข้าวมันไก่ first)
 const MEAL_TEMPLATES: Template[] = [
   {
-    keywords: ["โยเกิร์ต", "ยอร์ต", "กรีก", "yogurt"],
+    keywords: ["ข้าวมันไก่", "ข้าวหมก"],
     response: {
       intent: "meal",
-      quote: "เลือกได้น่ารักมากเลยค่ะ มื้อนี้โปรตีนกำลังพอดี",
-      quoteEmphasis: " อยู่ท้องไปได้ถึงเที่ยงสบาย ๆ จิบน้ำอุ่นช่วยอีกแก้วจะดีมากเลยค่ะ",
+      quote: "ข้าวมันไก่ครบสูตรเลยค่ะ โปรตีนดี ข้าวหอม มื้อนี้สมดุลมาก",
+      quoteEmphasis: " จิ้มน้ำจิ้มเยอะ ๆ ก็รสชาติดีขึ้นเยอะเลยนะคะ",
       macros: [
-        { label: "พลังงาน", value: "≈ 320", unit: "แคล" },
-        { label: "โปรตีน", value: "≈ 18", unit: "ก." },
-        { label: "คาร์บ", value: "≈ 30", unit: "ก." },
-        { label: "ไขมัน", value: "≈ 12", unit: "ก." },
+        { label: "พลังงาน", value: "≈ 520", unit: "แคล" },
+        { label: "โปรตีน", value: "≈ 32", unit: "ก." },
+        { label: "คาร์บ", value: "≈ 55", unit: "ก." },
+        { label: "ไขมัน", value: "≈ 18", unit: "ก." },
       ],
-      nutrients: { calories: 320, protein: 18, carbs: 30, fat: 12 },
-    },
-  },
-  {
-    keywords: ["ไข่", "egg", "ออมเล็ต", "ต้มยุ่ง", "ดาว", "เจียว", "ลวก"],
-    response: {
-      intent: "meal",
-      quote: "ไข่คือโปรตีนคุณภาพสูงเลยค่ะ มื้อเช้านี้เริ่มต้นได้ดีมาก",
-      quoteEmphasis: " ถ้าทานคู่กับผักสักนิดจะช่วยให้สมดุลยิ่งขึ้นนะคะ",
-      macros: [
-        { label: "พลังงาน", value: "≈ 220", unit: "แคล" },
-        { label: "โปรตีน", value: "≈ 14", unit: "ก." },
-        { label: "คาร์บ", value: "≈ 4", unit: "ก." },
-        { label: "ไขมัน", value: "≈ 16", unit: "ก." },
-      ],
-      nutrients: { calories: 220, protein: 14, carbs: 4, fat: 16 },
+      nutrients: { calories: 520, protein: 32, carbs: 55, fat: 18 },
     },
   },
   {
@@ -54,36 +41,6 @@ const MEAL_TEMPLATES: Template[] = [
     },
   },
   {
-    keywords: ["ข้าวมันไก่", "ข้าวหมก"],
-    response: {
-      intent: "meal",
-      quote: "ข้าวมันไก่ครบสูตรเลยค่ะ โปรตีนดี ข้าวหอม มื้อนี้สมดุลมาก",
-      quoteEmphasis: " จิ้มน้ำจิ้มเยอะ ๆ ก็รสชาติดีขึ้นเยอะเลยนะคะ",
-      macros: [
-        { label: "พลังงาน", value: "≈ 520", unit: "แคล" },
-        { label: "โปรตีน", value: "≈ 32", unit: "ก." },
-        { label: "คาร์บ", value: "≈ 55", unit: "ก." },
-        { label: "ไขมัน", value: "≈ 18", unit: "ก." },
-      ],
-      nutrients: { calories: 520, protein: 32, carbs: 55, fat: 18 },
-    },
-  },
-  {
-    keywords: ["ข้าว", "ข้าวต้ม", "ข้าวสวย", "ข้าวกล้อง", "ข้าวผัด", "ข้าวราดแกง"],
-    response: {
-      intent: "meal",
-      quote: "ข้าวให้พลังงานที่ค่อย ๆ ปลดปล่อยนะคะ เหมาะกับมื้อนี้มาก",
-      quoteEmphasis: " ลองเพิ่มโปรตีนสักนิดจะช่วยให้อิ่มนานขึ้นค่ะ",
-      macros: [
-        { label: "พลังงาน", value: "≈ 350", unit: "แคล" },
-        { label: "โปรตีน", value: "≈ 8", unit: "ก." },
-        { label: "คาร์บ", value: "≈ 68", unit: "ก." },
-        { label: "ไขมัน", value: "≈ 3", unit: "ก." },
-      ],
-      nutrients: { calories: 350, protein: 8, carbs: 68, fat: 3 },
-    },
-  },
-  {
     keywords: ["ต้มยำ", "ต้มข่า", "ต้มแซ่บ"],
     response: {
       intent: "meal",
@@ -99,7 +56,7 @@ const MEAL_TEMPLATES: Template[] = [
     },
   },
   {
-    keywords: ["ก๋วยเตี๋ยว", "ผัดไทย", "เส้น", "บะหมี่", "ราเมน", "โซบะ", "ก๋วยจั๊บ", "เส้นใหญ่", "เส้นเล็ก"],
+    keywords: ["ก๋วยเตี๋ยว", "ผัดไทย", "บะหมี่", "ราเมน", "โซบะ", "ก๋วยจั๊บ", "เส้นใหญ่", "เส้นเล็ก"],
     response: {
       intent: "meal",
       quote: "เส้นให้คาร์บที่ดีค่ะ มื้อนี้พลังงานกำลังพอดีสำหรับช่วงบ่าย",
@@ -129,22 +86,7 @@ const MEAL_TEMPLATES: Template[] = [
     },
   },
   {
-    keywords: ["สลัด", "ผัก", "lettuce", "แตงกวา", "มะเขือเทศ", "กรีนสลัด"],
-    response: {
-      intent: "meal",
-      quote: "สลัดวันนี้ดีมากเลยค่ะ ไฟเบอร์ช่วยให้ระบบย่อยทำงานสดชื่น",
-      quoteEmphasis: " เติมโปรตีนนิดหน่อยจะทำให้อิ่มนานขึ้นได้นะคะ",
-      macros: [
-        { label: "พลังงาน", value: "≈ 140", unit: "แคล" },
-        { label: "โปรตีน", value: "≈ 5", unit: "ก." },
-        { label: "คาร์บ", value: "≈ 18", unit: "ก." },
-        { label: "ไขมัน", value: "≈ 6", unit: "ก." },
-      ],
-      nutrients: { calories: 140, protein: 5, carbs: 18, fat: 6 },
-    },
-  },
-  {
-    keywords: ["แกง", "แกงเขียว", "แกงแดง", "แกงมัสมั่น", "แกงกะหรี่", "แกงส้ม", "พะแนง"],
+    keywords: ["แกง", "แกงเขียว", "แกงแดง", "แกงมัสมั่น", "แกงกะหรี่", "แกงส้ม", "พะแนง", "แกงอ่อม"],
     response: {
       intent: "meal",
       quote: "แกงไทยให้สมุนไพรและไขมันดีจากกะทินะคะ มื้อนี้อิ่มและหอมมาก",
@@ -159,7 +101,22 @@ const MEAL_TEMPLATES: Template[] = [
     },
   },
   {
-    keywords: ["หมูย่าง", "ไก่ย่าง", "หมูกระทะ", "ย่าง", "บาร์บีคิว", "บีบีคิว"],
+    keywords: ["สุกี้", "ชาบู", "หม้อไฟ"],
+    response: {
+      intent: "meal",
+      quote: "สุกี้และหม้อไฟเป็นมื้อที่อบอุ่นและโปรตีนสูงมากเลยค่ะ",
+      quoteEmphasis: " ลองเน้นผักและเนื้อสัตว์มากกว่าเส้นก็ได้นะคะ",
+      macros: [
+        { label: "พลังงาน", value: "≈ 420", unit: "แคล" },
+        { label: "โปรตีน", value: "≈ 30", unit: "ก." },
+        { label: "คาร์บ", value: "≈ 38", unit: "ก." },
+        { label: "ไขมัน", value: "≈ 14", unit: "ก." },
+      ],
+      nutrients: { calories: 420, protein: 30, carbs: 38, fat: 14 },
+    },
+  },
+  {
+    keywords: ["หมูย่าง", "ไก่ย่าง", "หมูกระทะ", "บาร์บีคิว", "บีบีคิว"],
     response: {
       intent: "meal",
       quote: "ย่างแบบนี้โปรตีนดีมากเลยค่ะ ไขมันที่ได้ก็เป็นไขมันที่รับได้นะคะ",
@@ -174,7 +131,7 @@ const MEAL_TEMPLATES: Template[] = [
     },
   },
   {
-    keywords: ["ปลา", "ปลาทอด", "ปลานึ่ง", "ปลาแซลมอน", "ทูน่า", "อาหารทะเล", "กุ้ง", "หอย", "ปลาหมึก"],
+    keywords: ["ปลาทอด", "ปลานึ่ง", "ปลาแซลมอน", "ทูน่า", "อาหารทะเล", "กุ้ง", "หอย", "ปลาหมึก"],
     response: {
       intent: "meal",
       quote: "อาหารทะเลดีมากเลยค่ะ โปรตีนสูงและโอเมก้า 3 ช่วยหัวใจและสมอง",
@@ -186,96 +143,6 @@ const MEAL_TEMPLATES: Template[] = [
         { label: "ไขมัน", value: "≈ 14", unit: "ก." },
       ],
       nutrients: { calories: 300, protein: 30, carbs: 10, fat: 14 },
-    },
-  },
-  {
-    keywords: ["ผลไม้", "กล้วย", "แอปเปิ้ล", "ส้ม", "มะม่วง", "สตรอว์เบอร์รี", "บลูเบอร์รี", "ลำไย", "ทุเรียน", "เงาะ"],
-    response: {
-      intent: "meal",
-      quote: "ผลไม้ให้วิตามินและน้ำตาลธรรมชาติที่ดีมากเลยค่ะ",
-      quoteEmphasis: " ทานตอนเช้าช่วยให้ร่างกายตื่นตัวได้ดีนะคะ",
-      macros: [
-        { label: "พลังงาน", value: "≈ 120", unit: "แคล" },
-        { label: "โปรตีน", value: "≈ 2", unit: "ก." },
-        { label: "คาร์บ", value: "≈ 28", unit: "ก." },
-        { label: "ไขมัน", value: "≈ 0.5", unit: "ก." },
-      ],
-      nutrients: { calories: 120, protein: 2, carbs: 28, fat: 1 },
-    },
-  },
-  {
-    keywords: ["นม", "โปรตีน", "เวย์", "whey", "shake", "สมูทตี้"],
-    response: {
-      intent: "meal",
-      quote: "ดีมากเลยค่ะ โปรตีนหลังออกกำลังกายช่วยให้กล้ามเนื้อฟื้นตัวได้ดีขึ้น",
-      quoteEmphasis: " ดื่มน้ำตามเยอะ ๆ ด้วยนะคะเพื่อให้ร่างกายดูดซึมได้ดี",
-      macros: [
-        { label: "พลังงาน", value: "≈ 160", unit: "แคล" },
-        { label: "โปรตีน", value: "≈ 20", unit: "ก." },
-        { label: "คาร์บ", value: "≈ 15", unit: "ก." },
-        { label: "ไขมัน", value: "≈ 4", unit: "ก." },
-      ],
-      nutrients: { calories: 160, protein: 20, carbs: 15, fat: 4 },
-    },
-  },
-  {
-    keywords: ["กาแฟ", "coffee", "ลาเต้", "อเมริกาโน", "แคปปูชิโน", "มอคค่า", "โอเลี้ยง"],
-    response: {
-      intent: "meal",
-      quote: "กาแฟช่วยให้สดชื่นได้ค่ะ แต่อย่าลืมจิบน้ำเปล่าสลับด้วยนะคะ",
-      quoteEmphasis: " ถ้าเป็นลาเต้ก็ได้แคลเซียมจากนมด้วยค่ะ",
-      macros: [
-        { label: "พลังงาน", value: "≈ 80", unit: "แคล" },
-        { label: "โปรตีน", value: "≈ 4", unit: "ก." },
-        { label: "คาร์บ", value: "≈ 8", unit: "ก." },
-        { label: "ไขมัน", value: "≈ 3", unit: "ก." },
-      ],
-      nutrients: { calories: 80, protein: 4, carbs: 8, fat: 3 },
-    },
-  },
-  {
-    keywords: ["ชา", "ชาเขียว", "ชาไทย", "ชานม", "ชามะนาว", "เครื่องดื่ม"],
-    response: {
-      intent: "meal",
-      quote: "ชาเขียวมีสารต้านอนุมูลอิสระที่ดีมากเลยค่ะ ดื่มสม่ำเสมอก็ดีนะคะ",
-      quoteEmphasis: " ถ้าไม่ใส่น้ำตาลก็ยิ่งดีต่อสุขภาพค่ะ",
-      macros: [
-        { label: "พลังงาน", value: "≈ 60", unit: "แคล" },
-        { label: "โปรตีน", value: "≈ 1", unit: "ก." },
-        { label: "คาร์บ", value: "≈ 14", unit: "ก." },
-        { label: "ไขมัน", value: "≈ 1", unit: "ก." },
-      ],
-      nutrients: { calories: 60, protein: 1, carbs: 14, fat: 1 },
-    },
-  },
-  {
-    keywords: ["ขนมปัง", "แซนวิช", "โทสต์", "bread", "sandwich", "ครัวซองต์"],
-    response: {
-      intent: "meal",
-      quote: "ขนมปังให้พลังงานไว — มื้อนี้เริ่มต้นวันได้ดีเลยค่ะ",
-      quoteEmphasis: " ถ้าเป็นขนมปังโฮลวีตจะได้ไฟเบอร์เพิ่มนะคะ",
-      macros: [
-        { label: "พลังงาน", value: "≈ 260", unit: "แคล" },
-        { label: "โปรตีน", value: "≈ 9", unit: "ก." },
-        { label: "คาร์บ", value: "≈ 44", unit: "ก." },
-        { label: "ไขมัน", value: "≈ 6", unit: "ก." },
-      ],
-      nutrients: { calories: 260, protein: 9, carbs: 44, fat: 6 },
-    },
-  },
-  {
-    keywords: ["โอ๊ต", "granola", "ซีเรียล", "muesli", "โอตมีล"],
-    response: {
-      intent: "meal",
-      quote: "โอ๊ตดีมากเลยค่ะ ไฟเบอร์สูงและปลดปล่อยพลังงานช้า ๆ",
-      quoteEmphasis: " อยู่ท้องได้นานจนถึงมื้อกลางวันสบาย ๆ นะคะ",
-      macros: [
-        { label: "พลังงาน", value: "≈ 300", unit: "แคล" },
-        { label: "โปรตีน", value: "≈ 10", unit: "ก." },
-        { label: "คาร์บ", value: "≈ 50", unit: "ก." },
-        { label: "ไขมัน", value: "≈ 7", unit: "ก." },
-      ],
-      nutrients: { calories: 300, protein: 10, carbs: 50, fat: 7 },
     },
   },
   {
@@ -309,7 +176,7 @@ const MEAL_TEMPLATES: Template[] = [
     },
   },
   {
-    keywords: ["เค้ก", "ขนม", "ไอศครีม", "ช็อกโกแลต", "คุกกี้", "มาการอง", "โดนัท", "วาฟเฟิล"],
+    keywords: ["เค้ก", "ไอศครีม", "ช็อกโกแลต", "คุกกี้", "มาการอง", "โดนัท", "วาฟเฟิล"],
     response: {
       intent: "meal",
       quote: "ของหวานบางทีก็จำเป็นสำหรับจิตใจนะคะ ทานแล้วมีความสุขก็โอเคค่ะ",
@@ -324,18 +191,155 @@ const MEAL_TEMPLATES: Template[] = [
     },
   },
   {
-    keywords: ["สุกี้", "ชาบู", "หม้อไฟ"],
+    keywords: ["ขนมปัง", "แซนวิช", "โทสต์", "bread", "sandwich", "ครัวซองต์"],
     response: {
       intent: "meal",
-      quote: "สุกี้และหม้อไฟเป็นมื้อที่อบอุ่นและโปรตีนสูงมากเลยค่ะ",
-      quoteEmphasis: " ลองเน้นผักและเนื้อสัตว์มากกว่าเส้นก็ได้นะคะ",
+      quote: "ขนมปังให้พลังงานไว — มื้อนี้เริ่มต้นวันได้ดีเลยค่ะ",
+      quoteEmphasis: " ถ้าเป็นขนมปังโฮลวีตจะได้ไฟเบอร์เพิ่มนะคะ",
       macros: [
-        { label: "พลังงาน", value: "≈ 420", unit: "แคล" },
-        { label: "โปรตีน", value: "≈ 30", unit: "ก." },
-        { label: "คาร์บ", value: "≈ 38", unit: "ก." },
-        { label: "ไขมัน", value: "≈ 14", unit: "ก." },
+        { label: "พลังงาน", value: "≈ 260", unit: "แคล" },
+        { label: "โปรตีน", value: "≈ 9", unit: "ก." },
+        { label: "คาร์บ", value: "≈ 44", unit: "ก." },
+        { label: "ไขมัน", value: "≈ 6", unit: "ก." },
       ],
-      nutrients: { calories: 420, protein: 30, carbs: 38, fat: 14 },
+      nutrients: { calories: 260, protein: 9, carbs: 44, fat: 6 },
+    },
+  },
+  {
+    keywords: ["โอ๊ต", "granola", "ซีเรียล", "muesli", "โอตมีล"],
+    response: {
+      intent: "meal",
+      quote: "โอ๊ตดีมากเลยค่ะ ไฟเบอร์สูงและปลดปล่อยพลังงานช้า ๆ",
+      quoteEmphasis: " อยู่ท้องได้นานจนถึงมื้อกลางวันสบาย ๆ นะคะ",
+      macros: [
+        { label: "พลังงาน", value: "≈ 300", unit: "แคล" },
+        { label: "โปรตีน", value: "≈ 10", unit: "ก." },
+        { label: "คาร์บ", value: "≈ 50", unit: "ก." },
+        { label: "ไขมัน", value: "≈ 7", unit: "ก." },
+      ],
+      nutrients: { calories: 300, protein: 10, carbs: 50, fat: 7 },
+    },
+  },
+  {
+    keywords: ["ผลไม้", "กล้วย", "แอปเปิ้ล", "ส้ม", "มะม่วง", "สตรอว์เบอร์รี", "บลูเบอร์รี", "ลำไย", "ทุเรียน", "เงาะ"],
+    response: {
+      intent: "meal",
+      quote: "ผลไม้ให้วิตามินและน้ำตาลธรรมชาติที่ดีมากเลยค่ะ",
+      quoteEmphasis: " ทานตอนเช้าช่วยให้ร่างกายตื่นตัวได้ดีนะคะ",
+      macros: [
+        { label: "พลังงาน", value: "≈ 120", unit: "แคล" },
+        { label: "โปรตีน", value: "≈ 2", unit: "ก." },
+        { label: "คาร์บ", value: "≈ 28", unit: "ก." },
+        { label: "ไขมัน", value: "≈ 0.5", unit: "ก." },
+      ],
+      nutrients: { calories: 120, protein: 2, carbs: 28, fat: 1 },
+    },
+  },
+  {
+    keywords: ["สลัด", "lettuce", "แตงกวา", "มะเขือเทศ", "กรีนสลัด"],
+    response: {
+      intent: "meal",
+      quote: "สลัดวันนี้ดีมากเลยค่ะ ไฟเบอร์ช่วยให้ระบบย่อยทำงานสดชื่น",
+      quoteEmphasis: " เติมโปรตีนนิดหน่อยจะทำให้อิ่มนานขึ้นได้นะคะ",
+      macros: [
+        { label: "พลังงาน", value: "≈ 140", unit: "แคล" },
+        { label: "โปรตีน", value: "≈ 5", unit: "ก." },
+        { label: "คาร์บ", value: "≈ 18", unit: "ก." },
+        { label: "ไขมัน", value: "≈ 6", unit: "ก." },
+      ],
+      nutrients: { calories: 140, protein: 5, carbs: 18, fat: 6 },
+    },
+  },
+  {
+    keywords: ["กาแฟ", "coffee", "ลาเต้", "อเมริกาโน", "แคปปูชิโน", "มอคค่า", "โอเลี้ยง"],
+    response: {
+      intent: "meal",
+      quote: "กาแฟช่วยให้สดชื่นได้ค่ะ แต่อย่าลืมจิบน้ำเปล่าสลับด้วยนะคะ",
+      quoteEmphasis: " ถ้าเป็นลาเต้ก็ได้แคลเซียมจากนมด้วยค่ะ",
+      macros: [
+        { label: "พลังงาน", value: "≈ 80", unit: "แคล" },
+        { label: "โปรตีน", value: "≈ 4", unit: "ก." },
+        { label: "คาร์บ", value: "≈ 8", unit: "ก." },
+        { label: "ไขมัน", value: "≈ 3", unit: "ก." },
+      ],
+      nutrients: { calories: 80, protein: 4, carbs: 8, fat: 3 },
+    },
+  },
+  {
+    keywords: ["ชาเขียว", "ชาไทย", "ชานม", "ชามะนาว", "เครื่องดื่ม"],
+    response: {
+      intent: "meal",
+      quote: "ชาเขียวมีสารต้านอนุมูลอิสระที่ดีมากเลยค่ะ ดื่มสม่ำเสมอก็ดีนะคะ",
+      quoteEmphasis: " ถ้าไม่ใส่น้ำตาลก็ยิ่งดีต่อสุขภาพค่ะ",
+      macros: [
+        { label: "พลังงาน", value: "≈ 60", unit: "แคล" },
+        { label: "โปรตีน", value: "≈ 1", unit: "ก." },
+        { label: "คาร์บ", value: "≈ 14", unit: "ก." },
+        { label: "ไขมัน", value: "≈ 1", unit: "ก." },
+      ],
+      nutrients: { calories: 60, protein: 1, carbs: 14, fat: 1 },
+    },
+  },
+  {
+    keywords: ["นม", "โปรตีน", "เวย์", "whey", "shake", "สมูทตี้"],
+    response: {
+      intent: "meal",
+      quote: "ดีมากเลยค่ะ โปรตีนหลังออกกำลังกายช่วยให้กล้ามเนื้อฟื้นตัวได้ดีขึ้น",
+      quoteEmphasis: " ดื่มน้ำตามเยอะ ๆ ด้วยนะคะเพื่อให้ร่างกายดูดซึมได้ดี",
+      macros: [
+        { label: "พลังงาน", value: "≈ 160", unit: "แคล" },
+        { label: "โปรตีน", value: "≈ 20", unit: "ก." },
+        { label: "คาร์บ", value: "≈ 15", unit: "ก." },
+        { label: "ไขมัน", value: "≈ 4", unit: "ก." },
+      ],
+      nutrients: { calories: 160, protein: 20, carbs: 15, fat: 4 },
+    },
+  },
+  // ── Generic ingredients last (short keywords match many compound dish names) ──
+  {
+    keywords: ["โยเกิร์ต", "ยอร์ต", "กรีก", "yogurt"],
+    response: {
+      intent: "meal",
+      quote: "เลือกได้น่ารักมากเลยค่ะ มื้อนี้โปรตีนกำลังพอดี",
+      quoteEmphasis: " อยู่ท้องไปได้ถึงเที่ยงสบาย ๆ จิบน้ำอุ่นช่วยอีกแก้วจะดีมากเลยค่ะ",
+      macros: [
+        { label: "พลังงาน", value: "≈ 320", unit: "แคล" },
+        { label: "โปรตีน", value: "≈ 18", unit: "ก." },
+        { label: "คาร์บ", value: "≈ 30", unit: "ก." },
+        { label: "ไขมัน", value: "≈ 12", unit: "ก." },
+      ],
+      nutrients: { calories: 320, protein: 18, carbs: 30, fat: 12 },
+    },
+  },
+  {
+    keywords: ["ไข่", "egg", "ออมเล็ต", "ต้มยุ่ง", "ดาว", "เจียว", "ลวก"],
+    response: {
+      intent: "meal",
+      quote: "ไข่คือโปรตีนคุณภาพสูงเลยค่ะ มื้อเช้านี้เริ่มต้นได้ดีมาก",
+      quoteEmphasis: " ถ้าทานคู่กับผักสักนิดจะช่วยให้สมดุลยิ่งขึ้นนะคะ",
+      macros: [
+        { label: "พลังงาน", value: "≈ 220", unit: "แคล" },
+        { label: "โปรตีน", value: "≈ 14", unit: "ก." },
+        { label: "คาร์บ", value: "≈ 4", unit: "ก." },
+        { label: "ไขมัน", value: "≈ 16", unit: "ก." },
+      ],
+      nutrients: { calories: 220, protein: 14, carbs: 4, fat: 16 },
+    },
+  },
+  // ── Generic (short keywords — must be last) ────────────────────────────────
+  {
+    keywords: ["ข้าว", "ข้าวต้ม", "ข้าวสวย", "ข้าวกล้อง", "ข้าวผัด", "ข้าวราดแกง"],
+    response: {
+      intent: "meal",
+      quote: "ข้าวให้พลังงานที่ค่อย ๆ ปลดปล่อยนะคะ เหมาะกับมื้อนี้มาก",
+      quoteEmphasis: " ลองเพิ่มโปรตีนสักนิดจะช่วยให้อิ่มนานขึ้นค่ะ",
+      macros: [
+        { label: "พลังงาน", value: "≈ 350", unit: "แคล" },
+        { label: "โปรตีน", value: "≈ 8", unit: "ก." },
+        { label: "คาร์บ", value: "≈ 68", unit: "ก." },
+        { label: "ไขมัน", value: "≈ 3", unit: "ก." },
+      ],
+      nutrients: { calories: 350, protein: 8, carbs: 68, fat: 3 },
     },
   },
 ];
